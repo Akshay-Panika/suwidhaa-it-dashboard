@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:suwidhaa_it_service_dashboard/feature/auth/screen/splash_screen.dart';
 
+import 'core/route/app_binding.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -14,9 +16,10 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Suwidhaa IT Service Dashboard',
       debugShowCheckedModeBanner: false,
+      initialBinding: AppBinding(), // ← NEW
       theme: ThemeData(
         useMaterial3: true,
-        fontFamily: 'Inter', // optional — remove if font not added
+        fontFamily: 'Inter',
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF8B5CF6),
         ),

@@ -1,217 +1,586 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../core/utils/app_color.dart';
-import '../../category/widget/category_service_card.dart'; // for itCategories
 
-// ═══════════════════════════════════════════════════════════════
-//  DASHBOARD CARD — self-contained stats grid
-//  No params needed. Renders all 4 stat cards internally.
-// ═══════════════════════════════════════════════════════════════
 class DashboardCard extends StatelessWidget {
-  const DashboardCard({super.key});
+  final VoidCallback? onAdsWorkshopTapped;
+  const DashboardCard({
+    super.key,
+    this.onAdsWorkshopTapped,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // ── Compute stats from category data ──
-    final totalServices =
-    itCategories.fold<int>(0, (s, c) => s + c.services.length);
-    final activeServices = itCategories.fold<int>(
-      0,
-          (s, c) =>
-      s + c.services.where((x) => x.status.toLowerCase() == 'active').length,
-    );
-    final inactiveServices = totalServices - activeServices;
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 900;
 
-    final stats = <_StatData>[
-      _StatData(
-        icon: Icons.category_rounded,
-        title: 'Total Categories',
-        value: '${itCategories.length}',
-        change: '+2',
-        isPositive: true,
-        subtitle: '$totalServices services total',
-        color: AppColor.primary,
-      ),
-      _StatData(
-        icon: Icons.miscellaneous_services_rounded,
-        title: 'Total Services',
-        value: '$totalServices',
-        change: '+4%',
-        isPositive: true,
-        subtitle: '$activeServices active',
-        color: const Color(0xFF3B82F6),
-      ),
-      _StatData(
-        icon: Icons.verified_rounded,
-        title: 'Active Services',
-        value: '$activeServices',
-        change: '+6%',
-        isPositive: true,
-        subtitle: '$inactiveServices inactive',
-        color: const Color(0xFF10B981),
-      ),
-      _StatData(
-        icon: Icons.pending_actions_rounded,
-        title: 'Inactive Services',
-        value: '$inactiveServices',
-        change: '-2%',
-        isPositive: false,
-        subtitle: 'Needs review',
-        color: const Color(0xFFEF4444),
-      ),
-    ];
+            final leftSide = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
+                Column(
+                  children: [
+                    const SizedBox(height: 24),
+                    _buildOverviewCard(),
+                    const SizedBox(height: 24),
+                    _buildNoticeBoard(),
+                  ],
+                )
+              ],
+            );
 
-    return LayoutBuilder(
-      builder: (context, c) {
-        final cols = c.maxWidth < 650 ? 1 : c.maxWidth < 1100 ? 2 : 4;
-        const gap = 16.0;
-        final w = (c.maxWidth - gap * (cols - 1)) / cols;
+            final rightSide = _buildLiveRequests();
 
-        return Wrap(
-          spacing: gap,
-          runSpacing: gap,
-          children: stats.map((s) {
-            return SizedBox(width: w, child: _StatItem(data: s));
-          }).toList(),
-        );
-      },
+            if (isMobile) {
+              return Column(
+                children: [
+                  leftSide,
+                  const SizedBox(height: 24),
+                  rightSide,
+                ],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(flex: 7, child: leftSide),
+                const SizedBox(width: 24),
+                Expanded(flex: 3, child: rightSide),
+              ],
+            );
+          },
+        ),
+      ),
     );
   }
-}
 
-// ═══════════════════════════════════════════════
-//  _StatData — internal data model
-// ═══════════════════════════════════════════════
-class _StatData {
-  final IconData icon;
-  final String title;
-  final String value;
-  final String? change;
-  final String? subtitle;
-  final bool isPositive;
-  final Color color;
+  // ─────────────────────────────────────────────────────────────
+  // 1. Header
+  // ─────────────────────────────────────────────────────────────
+  Widget _buildHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Welcome Back, Admin! 👋',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: AppColor.black,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          "Here's what's happening with your dashboard today",
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey.shade600,
+          ),
+        ),
+      ],
+    );
+  }
 
-  const _StatData({
-    required this.icon,
-    required this.title,
-    required this.value,
-    this.change,
-    this.subtitle,
-    this.isPositive = true,
-    required this.color,
-  });
-}
-
-// ═══════════════════════════════════════════════
-//  _StatItem — single stat card (internal)
-// ═══════════════════════════════════════════════
-class _StatItem extends StatelessWidget {
-  final _StatData data;
-  const _StatItem({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    final trendColor = data.isPositive ? const Color(0xFF10B981) : AppColor.red;
-
+  // ─────────────────────────────────────────────────────────────
+  // 2. Overview Card
+  // ─────────────────────────────────────────────────────────────
+  Widget _buildOverviewCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColor.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColor.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 12,
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Service Overview',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColor.black,
+                ),
+              ),
+              InkWell(
+                onTap: () {},
+                child: Text(
+                  'Tap to view details →',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColor.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              SizedBox(
+                width: 130,
+                height: 130,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CircularProgressIndicator(
+                      value: 0.65, // Example
+                      strokeWidth: 14,
+                      backgroundColor: Colors.grey.shade100,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColor.primary.withOpacity(0.8),
+                      ),
+                    ),
+                    const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '65%',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColor.black,
+                            ),
+                          ),
+                          Text(
+                            'Resolved',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 40),
+              Expanded(
+                child: Column(
+                  children: [
+                    _buildLegendItem('Completed', '0', const Color(0xFF10B981)),
+                    const SizedBox(height: 12),
+                    _buildLegendItem('Pending', '0', const Color(0xFFEF4444)),
+                    const SizedBox(height: 12),
+                    _buildLegendItem('In Progress', '0', const Color(0xFFF59E0B)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(String label, String count, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+          ),
+        ),
+        Text(
+          count,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: AppColor.black,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 3. Notice Board
+  // ─────────────────────────────────────────────────────────────
+  Widget _buildNoticeBoard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColor.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColor.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                '📌 System Updates',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColor.black,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isSmall = constraints.maxWidth < 600;
+              return Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  _buildNoticeItem(
+                    onTap: onAdsWorkshopTapped,
+                    title: 'Banner Maintenance',
+                    tag: 'Suwidhaa IT',
+                    desc: 'Server upgrade scheduled on Nov 25, 2026.',
+                    color: const Color(0xFFEFF6FF),
+                    borderColor: const Color(0xFF3B82F6),
+                    icon: '🛠️',
+                    width: isSmall ? constraints.maxWidth : (constraints.maxWidth - 16) / 2,
+                  ),
+                  _buildNoticeItem(
+                    title: 'New Service Added',
+                    tag: 'Suwidhaa IT',
+                    desc: 'Home Automation service is now live.',
+                    color: const Color(0xFFECFDF5),
+                    borderColor: const Color(0xFF10B981),
+                    icon: '⚡',
+                    width: isSmall ? constraints.maxWidth : (constraints.maxWidth - 16) / 2,
+                  ),
+                  _buildNoticeItem(
+                    title: 'Ads Workshop',
+                    tag: 'Suwidhaa IT',
+                    desc: 'Annual tech workshop scheduled on Jan 10.',
+                    color: const Color(0xFFECFDF5),
+                    borderColor: const Color(0xFF10B981),
+                    icon: '🏆',
+                    width: isSmall ? constraints.maxWidth : (constraints.maxWidth - 16) / 2,
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoticeItem({
+    required String title,
+    required String tag,
+    required String desc,
+    required Color color,
+    required Color borderColor,
+    required String icon,
+    required double width,
+    VoidCallback? onTap,
+  }) {
+    return SizedBox(
+      width: width,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withOpacity(0.5)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: borderColor,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(icon, style: const TextStyle(fontSize: 14)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppColor.black,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      tag,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: borderColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                desc,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade700,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 4. Live Requests
+  // ─────────────────────────────────────────────────────────────
+  Widget _buildLiveRequests() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColor.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColor.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: data.color.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(data.icon, color: data.color, size: 22),
+                child: const Icon(
+                  Icons.notifications_active_rounded,
+                  color: Color(0xFFEF4444),
+                  size: 18,
+                ),
               ),
-              const Spacer(),
-              if (data.change != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Current Requests',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColor.black,
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: trendColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
+                  Text(
+                    '6 pending requests',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade500,
+                    ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        data.isPositive
-                            ? Icons.trending_up_rounded
-                            : Icons.trending_down_rounded,
-                        size: 13,
-                        color: trendColor,
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        data.change!,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: trendColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                ],
+              ),
             ],
           ),
-          const SizedBox(height: 18),
-          Text(
-            data.value,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppColor.black,
-              height: 1.1,
+          const SizedBox(height: 20),
+          Expanded(
+            child: ListView(
+              children: [
+                _buildRequestCard(
+                  title: 'AC Repair Required',
+                  desc: 'AC not working in Server Room',
+                  tags: ['High', 'Pending'],
+                  category: 'Maintenance',
+                  time: '2 min ago',
+                  isUrgent: true,
+                ),
+                const SizedBox(height: 12),
+                _buildRequestCard(
+                  title: 'New Service Enquiry',
+                  desc: 'Inquiry for CCTV Installation in Office',
+                  tags: ['Medium', 'In Progress'],
+                  category: 'Enquiry',
+                  time: '15 min ago',
+                  isUrgent: false,
+                ),
+                const SizedBox(height: 12),
+                _buildRequestCard(
+                  title: 'Staff Leave Request',
+                  desc: 'Medical leave for Tech Support Agent',
+                  tags: ['High', 'Pending'],
+                  category: 'Leave',
+                  time: '1 hour ago',
+                  isUrgent: true,
+                ),
+                const SizedBox(height: 12),
+                _buildRequestCard(
+                  title: 'Payment Query',
+                  desc: 'Payment receipt not generated',
+                  tags: ['Low', 'Resolved'],
+                  category: 'Billing',
+                  time: '2 hours ago',
+                  isUrgent: false,
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            data.title,
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey.shade600,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          if (data.subtitle != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              data.subtitle!,
-              style: TextStyle(
-                fontSize: 11.5,
-                color: Colors.grey.shade500,
-              ),
-            ),
-          ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildRequestCard({
+    required String title,
+    required String desc,
+    required List<String> tags,
+    required String category,
+    required String time,
+    required bool isUrgent,
+  }) {
+    final bgColor = isUrgent ? const Color(0xFFFEF2F2) : AppColor.white;
+    final borderColor = isUrgent ? const Color(0xFFFCA5A5) : AppColor.border;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    _miniTag(tags[0], const Color(0xFFF59E0B)),
+                    _miniTag(tags[1], isUrgent ? const Color(0xFFEF4444) : const Color(0xFF10B981)),
+                  ],
+                ),
+              ),
+              Text(
+                time,
+                style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColor.black,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            desc,
+            style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Icon(Icons.folder_outlined, size: 12, color: Colors.grey.shade500),
+              const SizedBox(width: 4),
+              Text(
+                category,
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniTag(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
       ),
     );
   }
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  ADS CARD — unchanged
+// ADS CARD (Restored so main_screen.dart doesn't throw errors)
 // ═══════════════════════════════════════════════════════════════
 class AdsCard extends StatelessWidget {
   final String campaignName;
@@ -276,17 +645,9 @@ class AdsCard extends StatelessWidget {
             color: AppColor.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColor.border),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
@@ -325,10 +686,7 @@ class AdsCard extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: _statusColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
@@ -349,11 +707,7 @@ class AdsCard extends StatelessWidget {
                 children: [
                   Text(
                     'Budget spent',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
                   ),
                   const Spacer(),
                   Text(
@@ -376,357 +730,9 @@ class AdsCard extends StatelessWidget {
                   valueColor: AlwaysStoppedAnimation<Color>(accentColor),
                 ),
               ),
-              const SizedBox(height: 14),
-              Divider(color: AppColor.border, height: 1),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  _metric(
-                    Icons.visibility_outlined,
-                    _formatNum(impressions),
-                    'Views',
-                  ),
-                  const SizedBox(width: 16),
-                  _metric(
-                    Icons.touch_app_outlined,
-                    _formatNum(clicks),
-                    'Clicks',
-                  ),
-                  const SizedBox(width: 16),
-                  _metric(
-                    Icons.trending_up_rounded,
-                    '${_ctr.toStringAsFixed(2)}%',
-                    'CTR',
-                  ),
-                  const Spacer(),
-                  _iconBtn(
-                    Icons.edit_outlined,
-                    AppColor.black.withOpacity(0.55),
-                    onEdit,
-                  ),
-                  const SizedBox(width: 4),
-                  _iconBtn(
-                    Icons.delete_outline_rounded,
-                    AppColor.red,
-                    onDelete,
-                  ),
-                ],
-              ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _metric(IconData icon, String value, String label) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 12, color: Colors.grey.shade500),
-            const SizedBox(width: 4),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: AppColor.black,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
-        ),
-      ],
-    );
-  }
-
-  Widget _iconBtn(IconData icon, Color color, VoidCallback? onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: Padding(
-        padding: const EdgeInsets.all(5),
-        child: Icon(icon, size: 16, color: color),
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  BANNER CARD — unchanged
-// ═══════════════════════════════════════════════════════════════
-class BannerCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String position;
-  final List<Color> gradient;
-  final IconData icon;
-  final int impressions;
-  final int clicks;
-  final bool isActive;
-  final ValueChanged<bool>? onToggle;
-  final VoidCallback? onTap;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
-
-  const BannerCard({
-    super.key,
-    this.title = 'Diwali Mega Sale',
-    this.subtitle = 'Flat 40% off on all IT services',
-    this.position = 'Hero',
-    this.gradient = const [AppColor.primary, Color(0xFF6D28D9)],
-    this.icon = Icons.campaign_rounded,
-    this.impressions = 92000,
-    this.clicks = 2100,
-    this.isActive = true,
-    this.onToggle,
-    this.onTap,
-    this.onEdit,
-    this.onDelete,
-  });
-
-  double get _ctr => impressions == 0 ? 0 : (clicks / impressions) * 100;
-
-  String _formatNum(int n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return '$n';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColor.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColor.border),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                height: 110,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isActive
-                        ? gradient
-                        : [Colors.grey.shade400, Colors.grey.shade500],
-                  ),
-                ),
-                padding: const EdgeInsets.all(16),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      right: -10,
-                      bottom: -10,
-                      child: Icon(
-                        icon,
-                        size: 80,
-                        color: Colors.white.withOpacity(0.15),
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.topLeft,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.25),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          position.toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            letterSpacing: 0.6,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.25),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 5,
-                              height: 5,
-                              decoration: BoxDecoration(
-                                color: isActive
-                                    ? const Color(0xFF10B981)
-                                    : Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              isActive ? 'LIVE' : 'OFF',
-                              style: const TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                letterSpacing: 0.6,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.bottomLeft,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              color: Colors.white.withOpacity(0.85),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
-                child: Row(
-                  children: [
-                    _metric(
-                      Icons.visibility_outlined,
-                      _formatNum(impressions),
-                      'Views',
-                    ),
-                    const SizedBox(width: 14),
-                    _metric(
-                      Icons.touch_app_outlined,
-                      _formatNum(clicks),
-                      'Clicks',
-                    ),
-                    const SizedBox(width: 14),
-                    _metric(
-                      Icons.trending_up_rounded,
-                      '${_ctr.toStringAsFixed(1)}%',
-                      'CTR',
-                    ),
-                    const Spacer(),
-                    Transform.scale(
-                      scale: 0.75,
-                      child: Switch(
-                        value: isActive,
-                        activeColor: AppColor.primary,
-                        onChanged: onToggle,
-                      ),
-                    ),
-                    _iconBtn(
-                      Icons.edit_outlined,
-                      AppColor.black.withOpacity(0.55),
-                      onEdit,
-                    ),
-                    const SizedBox(width: 2),
-                    _iconBtn(
-                      Icons.delete_outline_rounded,
-                      AppColor.red,
-                      onDelete,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _metric(IconData icon, String value, String label) {
-    return Row(
-      children: [
-        Icon(icon, size: 12, color: Colors.grey.shade500),
-        const SizedBox(width: 4),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: AppColor.black,
-              ),
-            ),
-            Text(
-              label,
-              style: TextStyle(fontSize: 9, color: Colors.grey.shade500),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _iconBtn(IconData icon, Color color, VoidCallback? onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: Padding(
-        padding: const EdgeInsets.all(5),
-        child: Icon(icon, size: 16, color: color),
       ),
     );
   }
