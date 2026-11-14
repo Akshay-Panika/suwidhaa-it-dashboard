@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:suwidhaa_it_service_dashboard/feature/auth/screen/auth_screen.dart';
 import '../../../core/utils/app_color.dart';
+import '../../ads/widget/ads_card.dart';
 import '../../banner/widget/banner_card.dart';
 import '../../category/controller/category_controller.dart';
 import '../../category/widget/category_card.dart';
@@ -19,9 +20,6 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   final _categoryCtrl = Get.find<CategoryController>();
-
-  final _ads = const [/* ... same as before ... */];
-  final _banners = const [/* ... same as before ... */];
 
   Future<void> _logout(BuildContext context) async {
     final confirm = await showDialog<bool>(
@@ -78,7 +76,7 @@ class _MainScreenState extends State<MainScreen> {
             ),
             const SizedBox(width: 10),
             const Text(
-              'Suwidhaa Dashboard',
+              'Suwidhaa IT Service Dashboard',
               style: TextStyle(
                 color: AppColor.black,
                 fontSize: 18,
@@ -289,28 +287,19 @@ class _MainScreenState extends State<MainScreen> {
   }
 
 
-  // Widget _buildContent() {
-  //   if (_selectedIndex == '') {
-  //     return const BannerCard();
-  //   }
-  //   if (_selectedIndex == 0) {
-  //     return DashboardCard();
-  //   }
-  //   if (_selectedIndex == 1) {
-  //     return const CategoryCard();
-  //   }
-  //   if (_selectedIndex == 2) {
-  //     final selectedCat = _categoryCtrl.selectedCategory.value;
-  //     return CategoryServiceCard(
-  //       categoryId: selectedCat?.id ?? 0,
-  //       categoryName: selectedCat?.name ?? 'All Services',
-  //     );
-  //   }
-  //   return const CategoryCard();
-  // }
   Widget _buildContent() {
     if (_selectedIndex == 3) {
-      return  BannerCard(
+      return BannerCard(
+        onBack: () {
+          setState(() {
+            _selectedIndex = 0;
+          });
+        },
+      );
+    }
+
+    if (_selectedIndex == 4) {
+      return AdsCard(
         onBack: () {
           setState(() {
             _selectedIndex = 0;
@@ -321,16 +310,38 @@ class _MainScreenState extends State<MainScreen> {
 
     if (_selectedIndex == 0) {
       return DashboardCard(
-        onAdsWorkshopTapped: () {
+        onBannerTapped: () {
           setState(() {
             _selectedIndex = 3;
+          });
+        },
+        onAdsTapped: () {
+          setState(() {
+            _selectedIndex = 4; // 👈 Ads Card open karega
+          });
+        },
+        onServiceTapped: () {
+          setState(() {
+            if (_categoryCtrl.categories.isNotEmpty) {
+              _categoryCtrl.selectedCategory.value = _categoryCtrl.categories.first;
+            } else {
+              _categoryCtrl.selectedCategory.value = null;
+            }
+            _selectedIndex = 2;
           });
         },
       );
     }
 
     if (_selectedIndex == 1) {
-      return const CategoryCard();
+      return  CategoryCard(
+        onBack: () {
+          setState(() {
+            _selectedIndex = 0;
+          });
+          _categoryCtrl.resetForm();
+        },
+      );
     }
 
     if (_selectedIndex == 2) {
@@ -338,6 +349,11 @@ class _MainScreenState extends State<MainScreen> {
       return CategoryServiceCard(
         categoryId: selectedCat?.id ?? 0,
         categoryName: selectedCat?.name ?? 'All Services',
+        onBack: () {
+          setState(() {
+            _selectedIndex = 0; // Wapas Dashboard par bhej dega
+          });
+        },
       );
     }
 

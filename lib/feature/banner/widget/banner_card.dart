@@ -7,11 +7,11 @@ import '../controller/banner_controller.dart';
 import '../model/banner_model.dart';
 
 class BannerCard extends StatefulWidget {
-  final VoidCallback? onBack; // 👈 1. Ye line add karein
+  final VoidCallback? onBack;
 
   const BannerCard({
     super.key,
-    this.onBack, // 👈 2. Ye line add karein
+    this.onBack,
   });
 
   @override
@@ -630,7 +630,7 @@ class _BannerItem extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColor.primary.withOpacity(0.1),
+        // color: AppColor.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -639,17 +639,14 @@ class _BannerItem extends StatelessWidget {
           Icon(Icons.play_circle_outline_rounded,
               size: 13, color: AppColor.primary),
           const SizedBox(width: 4),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 220),
-            child: Text(
-              url,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppColor.primary),
-            ),
+          Text(
+            url,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+                color: AppColor.primary),
           ),
         ],
       ),

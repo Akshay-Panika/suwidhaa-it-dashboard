@@ -7,7 +7,12 @@ import '../controller/category_controller.dart';
 import '../model/category_model.dart';
 
 class CategoryCard extends StatefulWidget {
-  const CategoryCard({super.key});
+  final VoidCallback? onBack; // 👈 Ye line add karein
+
+  const CategoryCard({
+    super.key,
+    this.onBack, // 👈 Ye line add karein
+  });
 
   @override
   State<CategoryCard> createState() => _CategoryCardState();
@@ -75,6 +80,20 @@ class _CategoryCardState extends State<CategoryCard> {
                     ],
                   ),
                 ),
+
+                IconButton(
+                  tooltip: 'Back',
+                  onPressed: () {
+                    if (widget.onBack != null) {
+                      widget.onBack!();
+                    } else {
+                      Get.back();
+                    }
+                  },
+                  icon: const Icon(Icons.arrow_back_rounded,
+                      color: AppColor.black),
+                ),
+                const SizedBox(width: 6),
                 ElevatedButton.icon(
                   onPressed: () {
                     c.startAdding();

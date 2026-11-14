@@ -10,11 +10,13 @@ import '../model/service_model.dart';
 class CategoryServiceCard extends StatefulWidget {
   final int? categoryId;
   final String? categoryName;
+  final VoidCallback? onBack;
 
   const CategoryServiceCard({
     super.key,
     this.categoryId,
     this.categoryName,
+    this.onBack,
   });
 
   @override
@@ -104,6 +106,19 @@ class _CategoryServiceCardState extends State<CategoryServiceCard> {
                     ],
                   ),
                 ),
+                IconButton(
+                  tooltip: 'Back',
+                  onPressed: () {
+                    if (widget.onBack != null) {
+                      widget.onBack!();
+                    } else {
+                      Get.back();
+                    }
+                  },
+                  icon: const Icon(Icons.arrow_back_rounded,
+                      color: AppColor.black),
+                ),
+                const SizedBox(width: 6),
                 ElevatedButton.icon(
                   onPressed: () {
                     c.startAdding();

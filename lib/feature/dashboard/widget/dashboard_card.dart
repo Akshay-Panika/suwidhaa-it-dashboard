@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/utils/app_color.dart';
+import '../../order/widget/current_request_card.dart';
 
 class DashboardCard extends StatelessWidget {
-  final VoidCallback? onAdsWorkshopTapped;
+  final VoidCallback? onBannerTapped; // 👈 Banner ke liye
+  final VoidCallback? onAdsTapped;    // 👈 Ads ke liye
+  final VoidCallback? onServiceTapped;    // 👈 Ads ke liye
+
   const DashboardCard({
     super.key,
-    this.onAdsWorkshopTapped,
+    this.onBannerTapped,
+    this.onAdsTapped,
+    this.onServiceTapped,
   });
 
   @override
@@ -33,7 +39,7 @@ class DashboardCard extends StatelessWidget {
               ],
             );
 
-            final rightSide = _buildLiveRequests();
+            final rightSide = CurrentRequestCard();
 
             if (isMobile) {
               return Column(
@@ -261,7 +267,7 @@ class DashboardCard extends StatelessWidget {
                 runSpacing: 16,
                 children: [
                   _buildNoticeItem(
-                    onTap: onAdsWorkshopTapped,
+                    onTap: onBannerTapped,
                     title: 'Banner Maintenance',
                     tag: 'Suwidhaa IT',
                     desc: 'Server upgrade scheduled on Nov 25, 2026.',
@@ -271,6 +277,7 @@ class DashboardCard extends StatelessWidget {
                     width: isSmall ? constraints.maxWidth : (constraints.maxWidth - 16) / 2,
                   ),
                   _buildNoticeItem(
+                    onTap: onServiceTapped,
                     title: 'New Service Added',
                     tag: 'Suwidhaa IT',
                     desc: 'Home Automation service is now live.',
@@ -280,6 +287,7 @@ class DashboardCard extends StatelessWidget {
                     width: isSmall ? constraints.maxWidth : (constraints.maxWidth - 16) / 2,
                   ),
                   _buildNoticeItem(
+                    onTap: onAdsTapped,
                     title: 'Ads Workshop',
                     tag: 'Suwidhaa IT',
                     desc: 'Annual tech workshop scheduled on Jan 10.',
@@ -386,354 +394,4 @@ class DashboardCard extends StatelessWidget {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // 4. Live Requests
-  // ─────────────────────────────────────────────────────────────
-  Widget _buildLiveRequests() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColor.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF2F2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.notifications_active_rounded,
-                  color: Color(0xFFEF4444),
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Current Requests',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColor.black,
-                    ),
-                  ),
-                  Text(
-                    '6 pending requests',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: ListView(
-              children: [
-                _buildRequestCard(
-                  title: 'AC Repair Required',
-                  desc: 'AC not working in Server Room',
-                  tags: ['High', 'Pending'],
-                  category: 'Maintenance',
-                  time: '2 min ago',
-                  isUrgent: true,
-                ),
-                const SizedBox(height: 12),
-                _buildRequestCard(
-                  title: 'New Service Enquiry',
-                  desc: 'Inquiry for CCTV Installation in Office',
-                  tags: ['Medium', 'In Progress'],
-                  category: 'Enquiry',
-                  time: '15 min ago',
-                  isUrgent: false,
-                ),
-                const SizedBox(height: 12),
-                _buildRequestCard(
-                  title: 'Staff Leave Request',
-                  desc: 'Medical leave for Tech Support Agent',
-                  tags: ['High', 'Pending'],
-                  category: 'Leave',
-                  time: '1 hour ago',
-                  isUrgent: true,
-                ),
-                const SizedBox(height: 12),
-                _buildRequestCard(
-                  title: 'Payment Query',
-                  desc: 'Payment receipt not generated',
-                  tags: ['Low', 'Resolved'],
-                  category: 'Billing',
-                  time: '2 hours ago',
-                  isUrgent: false,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRequestCard({
-    required String title,
-    required String desc,
-    required List<String> tags,
-    required String category,
-    required String time,
-    required bool isUrgent,
-  }) {
-    final bgColor = isUrgent ? const Color(0xFFFEF2F2) : AppColor.white;
-    final borderColor = isUrgent ? const Color(0xFFFCA5A5) : AppColor.border;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    _miniTag(tags[0], const Color(0xFFF59E0B)),
-                    _miniTag(tags[1], isUrgent ? const Color(0xFFEF4444) : const Color(0xFF10B981)),
-                  ],
-                ),
-              ),
-              Text(
-                time,
-                style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppColor.black,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            desc,
-            style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Icon(Icons.folder_outlined, size: 12, color: Colors.grey.shade500),
-              const SizedBox(width: 4),
-              Text(
-                category,
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _miniTag(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 9,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// ADS CARD (Restored so main_screen.dart doesn't throw errors)
-// ═══════════════════════════════════════════════════════════════
-class AdsCard extends StatelessWidget {
-  final String campaignName;
-  final String platformName;
-  final IconData platformIcon;
-  final Color accentColor;
-  final double budget;
-  final double spent;
-  final int impressions;
-  final int clicks;
-  final String status;
-  final VoidCallback? onTap;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
-
-  const AdsCard({
-    super.key,
-    this.campaignName = 'Summer Sale Campaign',
-    this.platformName = 'Google Ads',
-    this.platformIcon = Icons.ads_click_rounded,
-    this.accentColor = AppColor.primary,
-    this.budget = 50000,
-    this.spent = 32500,
-    this.impressions = 148000,
-    this.clicks = 3200,
-    this.status = 'Active',
-    this.onTap,
-    this.onEdit,
-    this.onDelete,
-  });
-
-  double get _progress => budget == 0 ? 0 : (spent / budget).clamp(0.0, 1.0);
-  double get _ctr => impressions == 0 ? 0 : (clicks / impressions) * 100;
-
-  Color get _statusColor {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return const Color(0xFF10B981);
-      case 'paused':
-        return const Color(0xFFF59E0B);
-      default:
-        return AppColor.red;
-    }
-  }
-
-  String _formatNum(int n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return '$n';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: AppColor.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColor.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(platformIcon, color: accentColor, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          campaignName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColor.black,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          platformName,
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: _statusColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      status,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: _statusColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Text(
-                    'Budget spent',
-                    style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '₹${spent.toStringAsFixed(0)} / ₹${budget.toStringAsFixed(0)}',
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColor.black,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: LinearProgressIndicator(
-                  value: _progress,
-                  minHeight: 6,
-                  backgroundColor: AppColor.border,
-                  valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

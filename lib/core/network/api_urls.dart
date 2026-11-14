@@ -15,4 +15,9 @@ class ApiUrls {
   static const String bannerCreate = 'v1/it_service/banner/create/';
   static const String bannerList = 'v1/it_service/banner/list/';
   static String bannerDetail(int id) => 'v1/it_service/banner/$id/';
+
+  // ── Ads ──
+  static const String adCreate = 'v1/it_service/ad/create/';
+  static const String adList = 'v1/it_service/ad/list/';
+  static String adDetail(int id) => 'v1/it_service/ad/$id/';
 }
