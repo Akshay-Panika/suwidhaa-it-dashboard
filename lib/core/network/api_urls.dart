@@ -20,4 +20,7 @@ class ApiUrls {
   static const String adCreate = 'v1/it_service/ad/create/';
   static const String adList = 'v1/it_service/ad/list/';
   static String adDetail(int id) => 'v1/it_service/ad/$id/';
+
+  // ── Booking ──
+  static const String bookingList = 'v1/it_service/booking/list/';
 }

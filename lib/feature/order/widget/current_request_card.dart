@@ -1,12 +1,19 @@
-import 'package:flutter/material.dart';
+// lib/feature/dashboard/widget/current_request_card.dart
+// (adjust path as per your project)
 
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../core/utils/app_color.dart';
+import '../controller/booking_controller.dart';
+import '../model/booking_model.dart';
 
 class CurrentRequestCard extends StatelessWidget {
   const CurrentRequestCard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<BookingController>();
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -23,6 +30,7 @@ class CurrentRequestCard extends StatelessWidget {
       ),
       child: Column(
         children: [
+          // ── Header ──
           Row(
             children: [
               Container(
@@ -49,64 +57,109 @@ class CurrentRequestCard extends StatelessWidget {
                       color: AppColor.black,
                     ),
                   ),
-                  Text(
-                    '6 pending requests',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
+                  Obx(() {
+                    final count = controller.bookings.length;
+                    return Text(
+                      '$count pending request${count == 1 ? '' : 's'}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade500,
+                      ),
+                    );
+                  }),
                 ],
               ),
             ],
           ),
           const SizedBox(height: 20),
+
+          // ── List area ──
           Expanded(
-            child: ListView(
-              children: [
-                _buildRequestCard(
-                  title: 'AC Repair Required',
-                  desc: 'AC not working in Server Room',
-                  tags: ['High', 'Pending'],
-                  category: 'Maintenance',
-                  time: '2 min ago',
-                  isUrgent: true,
-                ),
-                const SizedBox(height: 12),
-                _buildRequestCard(
-                  title: 'New Service Enquiry',
-                  desc: 'Inquiry for CCTV Installation in Office',
-                  tags: ['Medium', 'In Progress'],
-                  category: 'Enquiry',
-                  time: '15 min ago',
-                  isUrgent: false,
-                ),
-                const SizedBox(height: 12),
-                _buildRequestCard(
-                  title: 'Staff Leave Request',
-                  desc: 'Medical leave for Tech Support Agent',
-                  tags: ['High', 'Pending'],
-                  category: 'Leave',
-                  time: '1 hour ago',
-                  isUrgent: true,
-                ),
-                const SizedBox(height: 12),
-                _buildRequestCard(
-                  title: 'Payment Query',
-                  desc: 'Payment receipt not generated',
-                  tags: ['Low', 'Resolved'],
-                  category: 'Billing',
-                  time: '2 hours ago',
-                  isUrgent: false,
-                ),
-              ],
-            ),
+            child: Obx(() {
+              // Loading state
+              if (controller.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              // Error state
+              if (controller.errorMessage.value.isNotEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        controller.errorMessage.value,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.red.shade400, fontSize: 12),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: controller.retry,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              // Empty state
+              if (controller.bookings.isEmpty) {
+                return Center(
+                  child: Text(
+                    'No current requests',
+                    style: TextStyle(color: Colors.grey.shade500),
+                  ),
+                );
+              }
+
+              // Data list
+              return ListView.separated(
+                itemCount: controller.bookings.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final booking = controller.bookings[index];
+                  return _buildRequestCardFromBooking(booking);
+                },
+              );
+            }),
           ),
         ],
       ),
     );
   }
 
+  // ── Map BookingModel → existing card UI ──
+  Widget _buildRequestCardFromBooking(BookingModel booking) {
+    final status = booking.status.toLowerCase();
+    final isUrgent = status == 'pending';
+    final tags = [
+      booking.serviceDetail.category.name, // first tag (orange)
+      booking.status,                      // second tag (red/green)
+    ];
+    final time = _formatTime(booking.createdAt);
+
+    return _buildRequestCard(
+      title: booking.serviceDetail.title,
+      desc: booking.serviceDetail.description,
+      tags: tags,
+      category: booking.serviceDetail.category.name,
+      time: time,
+      isUrgent: isUrgent,
+    );
+  }
+
+  // ── Relative time formatting ──
+  String _formatTime(DateTime dateTime) {
+    final diff = DateTime.now().difference(dateTime);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
+    if (diff.inHours < 24) {
+      return '${diff.inHours} hour${diff.inHours > 1 ? 's' : ''} ago';
+    }
+    return '${diff.inDays} day${diff.inDays > 1 ? 's' : ''} ago';
+  }
+
+  // ── Existing card builder (unchanged) ──
   Widget _buildRequestCard({
     required String title,
     required String desc,
@@ -137,7 +190,12 @@ class CurrentRequestCard extends StatelessWidget {
                   runSpacing: 6,
                   children: [
                     _miniTag(tags[0], const Color(0xFFF59E0B)),
-                    _miniTag(tags[1], isUrgent ? const Color(0xFFEF4444) : const Color(0xFF10B981)),
+                    _miniTag(
+                      tags[1],
+                      isUrgent
+                          ? const Color(0xFFEF4444)
+                          : const Color(0xFF10B981),
+                    ),
                   ],
                 ),
               ),
@@ -159,6 +217,8 @@ class CurrentRequestCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             desc,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 10),
@@ -177,6 +237,7 @@ class CurrentRequestCard extends StatelessWidget {
     );
   }
 
+  // ── Mini tag chip (unchanged) ──
   Widget _miniTag(String text, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -194,5 +255,4 @@ class CurrentRequestCard extends StatelessWidget {
       ),
     );
   }
-
 }
