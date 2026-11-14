@@ -567,6 +567,7 @@ class _ServiceItem extends StatelessWidget {
   Widget _iconBox() {
     if (service.imageUrl.isEmpty) {
       return Container(
+        height: 120,width: 200,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: AppColor.primary.withOpacity(0.12),
@@ -577,8 +578,7 @@ class _ServiceItem extends StatelessWidget {
     }
 
     return Container(
-      height: 42,
-      width: 42,
+      height: 120,width: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         image: DecorationImage(

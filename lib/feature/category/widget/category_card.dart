@@ -547,6 +547,7 @@ class _CategoryItem extends StatelessWidget {
   Widget _iconBox(bool isDefault) {
     if (isDefault) {
       return Container(
+        height: 100,width: 100,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: AppColor.primary.withOpacity(0.12),
@@ -558,6 +559,7 @@ class _CategoryItem extends StatelessWidget {
 
     if (category.imageUrl.isEmpty) {
       return Container(
+        height: 100,width: 100,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: AppColor.primary.withOpacity(0.12),
@@ -568,8 +570,7 @@ class _CategoryItem extends StatelessWidget {
     }
 
     return Container(
-      height: 42,
-      width: 42,
+      height: 100,width: 100,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         image: DecorationImage(
